@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Music</title>
+
+    <style>
+body {
+    background-color: #f5f5f5;   /* サイト全体の背景 */
+    color: #222;                 /* 文字色 */
+    font-family: "Arial", sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 40px 20px;
+}
+
+h1 {
+    font-size: 50px;             /* タイトルの大きさ */
+    letter-spacing: 5px;         /* 文字の間隔 */
+}
+
+.player {
+    background-color: white;
+    width: 350px;
+    margin: 40px auto;
+    padding: 30px;
+    border-radius: 25px;
+
+    /* 影を付ける */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.song-title {
+    font-size: 26px;
+    font-weight: bold;
+}
+
+button {
+    background-color: #222;
+    color: white;
+    border: none;
+
+    padding: 15px 35px;
+    font-size: 18px;
+
+    border-radius: 30px;
+    cursor: pointer;
+}
+    </style>
+
+</head>
+
+<body>
+
+
+    <h1>🎵 MY MUSIC</h1>
+
+    <audio id="music1" src="music1.m4a"></audio>
+
+    <button onclick="playMusic()">▶ 音楽を再生</button>
+
+    <script>
+        function playMusic() {
+            const music = document.getElementById("music1");
+            music.play();
+        }
+    </script>
+
+</body>
+
+</html>
