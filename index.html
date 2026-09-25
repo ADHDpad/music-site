@@ -57,16 +57,65 @@ button {
 
     <h1>🎵 MY MUSIC</h1>
 
-    <audio id="music1" src="music1.m4a"></audio>
+    <button onclick="playMusic()">▶ 石上を再生</button>
+    <button onclick="playMusic2()">▶ ローズを再生</button>
+    <button onclick="playMusic3()">▶ 清宮を再生</button>
+    <button onclick="startPlaylist()">▶ 選んだ曲を連続再生</button>
 
-    <button onclick="playMusic()">▶ 音楽を再生</button>
+<script>
+    const audioContext = new AudioContext();
 
-    <script>
-        function playMusic() {
-            const music = document.getElementById("music1");
-            music.play();
+    const songs = {
+        music1: "music1.m4a",
+        music2: "music2.m4a",
+        music3: "music3.m4a"
+    };
+
+    let playlist = [];
+
+    function playMusic() {
+        playlist.push("music1");
+    }
+
+    function playMusic2() {
+        playlist.push("music2");
+    }
+
+    function playMusic3() {
+        playlist.push("music3");
+    }
+
+    async function loadSong(name) {
+        const response = await fetch(songs[name]);
+        const arrayBuffer = await response.arrayBuffer();
+        return await audioContext.decodeAudioData(arrayBuffer);
+    }
+
+    async function startPlaylist() {
+        await audioContext.resume();
+
+        const buffers = [];
+
+        for (const name of playlist) {
+            const buffer = await loadSong(name);
+            buffers.push(buffer);
         }
-    </script>
+
+        const startTime = audioContext.currentTime + 0.1;
+
+        for (let i = 0; i < buffers.length; i++) {
+            const source = audioContext.createBufferSource();
+
+            source.buffer = buffers[i];
+            source.connect(audioContext.destination);
+
+            source.start(startTime + (15.36 * i));
+
+            // 8小節だけ再生
+            source.stop(startTime + (15.36 * (i + 1)));
+        }
+    }
+</script>
 
 </body>
 
