@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>応援歌メドレー</title>
+
+    <style>
+        body {
+            background-color: #f5f5f5;
+            color: #222;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            font-size: 40px;
+        }
+
+        .player {
+            background-color: white;
+            width: 350px;
+            max-width: 90%;
+            margin: 40px auto;
+            padding: 30px;
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            margin: 15px 0;
+            background-color: #222;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            font-size: 18px;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="player">
+
+        <h1>🎵 応援歌メドレー</h1>
+
+        <button onclick="selectSong('music1')">
+            石上を選択
+        </button>
+
+        <button onclick="selectSong('music2')">
+            ローズを選択
+        </button>
+
+        <button onclick="selectSong('music3')">
+            清宮を選択
+        </button>
+
+        <button onclick="startPlaylist()">
+            ▶ 選んだ曲をメドレー再生
+        </button>
+
+        <button onclick="clearPlaylist()">
+            選曲をリセット
+        </button>
+
+        <div id="status">
+            曲を選んでください
+        </div>
+
+    </div>
+
+
+    <script>
+
+        // ==============================
+        // 基本設定
+        // ==============================
+
+        const audioContext =
+            new (window.AudioContext ||
+                 window.webkitAudioContext)();
+
+
+        // 音楽ファイル
+        const songs = {
+
+            music1: "music1.m4a",
+            music2: "music2.m4a",
+            music3: "music3.m4a"
+
+        };
+
+
+        // 表示する選手名
+        const songNames = {
+
+            music1: "石上",
+            music2: "ローズ",
+            music3: "清宮"
+
+        };
+
+
+        // 選択した曲
+        let playlist = [];
+
+
+        // ==============================
+        // BPM170
+        // ==============================
+
+        // 1小節
+        //
+        // 60 ÷ 170 × 4
+        //
+        // 約1.411765秒
+
+        const START_POSITION = 1.411765;
+
+
+        // 8小節
+        //
+        // 60 ÷ 170 × 4 × 8
+        //
+        // 約11.294118秒
+
+        const PLAY_DURATION = 11.294118;
+
+
+        // ==============================
+        // 曲を選択
+        // ==============================
+
+        function selectSong(songName) {
+
+            playlist.push(songName);
+
+            updateStatus();
+
+        }
+
+
+        // ==============================
+        // 選曲表示
+        // ==============================
+
+        function updateStatus() {
+
+            const status =
+                document.getElementById("status");
+
+
+            if (playlist.length === 0) {
+
+                status.textContent =
+                    "曲を選んでください";
+
+                return;
+
+            }
+
+
+            const names =
+                playlist.map(song =>
+                    songNames[song]
+                );
+
+
+            status.textContent =
+                "選択中：" +
+                names.join(" → ");
+
+        }
+
+
+        // ==============================
+        // 選曲リセット
+        // ==============================
+
+        function clearPlaylist() {
+
+            playlist = [];
+
+            updateStatus();
+
+        }
+
+
+        // ==============================
+        // 音楽ファイルを読み込む
+        // ==============================
+
+        async function loadSong(songName) {
+
+            const response =
+                await fetch(songs[songName]);
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    songs[songName] +
+                    " を読み込めません"
+                );
+
+            }
+
+
+            const arrayBuffer =
+                await response.arrayBuffer();
+
+
+            const audioBuffer =
+                await audioContext.decodeAudioData(
+                    arrayBuffer
+                );
+
+
+            return audioBuffer;
+
+        }
+
+
+        // ==============================
+        // メドレー再生
+        // ==============================
+
+        async function startPlaylist() {
+
+            if (playlist.length === 0) {
+
+                alert(
+                    "先に曲を選んでください"
+                );
+
+                return;
+
+            }
+
+
+            const status =
+                document.getElementById("status");
+
+
+            status.textContent =
+                "音楽を読み込んでいます…";
+
+
+            try {
+
+                // ブラウザの音声機能を開始
+                await audioContext.resume();
+
+
+                // ----------------------
+                // 全曲を先に読み込む
+                // ----------------------
+
+                const buffers = [];
+
+
+                for (const songName of playlist) {
+
+                    const buffer =
+                        await loadSong(songName);
+
+                    buffers.push(buffer);
+
+                }
+
+
+                // ----------------------
+                // 共通スタート時刻
+                // ----------------------
+
+                // 少し先の時刻から開始することで
+                // 全曲を事前予約できる
+
+                const startTime =
+                    audioContext.currentTime + 0.2;
+
+
+                // ----------------------
+                // 全曲を先に予約
+                // ----------------------
+
+                for (
+                    let i = 0;
+                    i < buffers.length;
+                    i++
+                ) {
+
+                    const source =
+                        audioContext
+                            .createBufferSource();
+
+
+                    source.buffer =
+                        buffers[i];
+
+
+                    source.connect(
+                        audioContext.destination
+                    );
+
+
+                    // この曲が始まる時刻
+                    //
+                    // 1曲目 0秒
+                    // 2曲目 11.294118秒
+                    // 3曲目 22.588236秒
+
+                    const songStartTime =
+                        startTime +
+                        (PLAY_DURATION * i);
+
+
+                    // ----------------------
+                    // 再生
+                    // ----------------------
+                    //
+                    // 第1引数：
+                    // いつ再生するか
+                    //
+                    // 第2引数：
+                    // 音源の何秒地点から始めるか
+                    //
+                    // 第3引数：
+                    // 何秒間再生するか
+                    //
+                    // 最初の1小節を飛ばして
+                    // 8小節だけ再生する
+
+                    source.start(
+                        songStartTime,
+                        START_POSITION,
+                        PLAY_DURATION
+                    );
+
+                }
+
+
+                status.textContent =
+                    "▶ メドレー再生中";
+
+
+            }
+            catch (error) {
+
+                console.error(error);
+
+                status.textContent =
+                    "音楽を読み込めませんでした";
+
+                alert(
+                    "音楽ファイルの読み込みでエラーが発生しました"
+                );
+
+            }
+
+        }
+
+    </script>
+
+</body>
+
+</html>
